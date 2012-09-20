@@ -1,6 +1,6 @@
 {
   "name": "duceck",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Arduino Chess Clock",
   "keywords": ["chess", "clock", "arduino"],
   "author": {
@@ -21,7 +21,7 @@
       "url": "https://github.com/Sija/duceck/blob/master/LICENSE"
     }
   ],
-  "main": "main",
+  "main": "index",
   "engines": {
     "node": ">= 0.6.x"
   },

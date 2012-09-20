@@ -12,13 +12,13 @@ class ClockManager extends Events.EventEmitter
         clock.on 'timeout', =>
           @board.warn 'Clock', "#{clock} timeouted"
           unless clock.hasTimeControl clock.TIME_CONTROL.WORD
-            @otherClock(clock).stop()
+            @otherClock clock, 'stop'
           @emit 'timeout', clock
           true
         
         clock.on 'button.down', =>
           clock.stop()
-          @otherClock(clock).start()
+          @otherClock clock, 'start'
           @emit 'button.down', clock
           true
         
@@ -27,17 +27,20 @@ class ClockManager extends Events.EventEmitter
           
           return unless otherClock.button.isDown
           return if clocks.indexOf(clock) % 2
-          if clock.running or otherClock.running
-            @stop()
-          else
-            @start()
+          
+          unless clock.hasTimeControl clock.TIME_CONTROL.WORD
+            return @restart() if clock.timeouted or otherClock.timeouted
+          
+          @pause()
           @emit 'button.hold', clock
           true
   
-  otherClock: (clock) ->
-    if clock is @clocks[0] then @clocks[1] else @clocks[0]
+  otherClock: (clock, action = null) ->
+    otherClock = if clock is @clocks[0] then @clocks[1] else @clocks[0]
+    if action? then otherClock[action]() else otherClock
   
   start: ->
+    @board.info 'Clock', 'New game started' unless @lastClock
     @lastClock ||= @clocks[0]
     @lastClock.start()
     @emit 'start', @lastClock
@@ -48,5 +51,24 @@ class ClockManager extends Events.EventEmitter
     clock.stop() for clock in @clocks
     @emit 'stop', @lastClock
     true
+  
+  pause: ->
+    anyAlive = no
+    anyAlive = yes for clock in @clocks when clock.running
+    
+    if anyAlive
+      @board.info 'Clock', 'Game paused'
+      @stop()
+    else
+      @board.info 'Clock', 'Game resumed'
+      @start()
+    true
+  
+  restart: ->
+    @board.info 'Clock', 'Clocks resetted'
+    clock.reset() for clock in @clocks
+    @lastClock = null
+    @start()
+
 
 module.exports = ClockManager
